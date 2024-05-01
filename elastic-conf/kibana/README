@@ -1,0 +1,2 @@
+Command :
+sc create "kibana" displayName= "Elastic Kibana 8.5.0" binPath= "C:\Program Files\Elastic Kibana\bin\kibana.bat" depend= "elasticsearch-service-x64"

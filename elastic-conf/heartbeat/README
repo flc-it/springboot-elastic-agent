@@ -1,0 +1,2 @@
+Powershell en mode administrateur :
+PowerShell.exe -ExecutionPolicy UnRestricted -File 'C:\Program Files\Elastic Heartbeat\install-service-heartbeat.ps1'

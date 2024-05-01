@@ -1,0 +1,2 @@
+org.springframework.boot.env.EnvironmentPostProcessor=org.flcit.springboot.elastic.agent.ElasticApmAttachPostProcess
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=org.flcit.springboot.elastic.agent.ElasticApmAutoConfiguration
