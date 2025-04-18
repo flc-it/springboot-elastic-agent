@@ -1,7 +1,7 @@
 # springboot-elastic-agent
 
 ## Présentation
-Le projet *sandbox-elastic-agent* est la librairie pour utiliser l'agent de monitoring Elastic dans les projets Spring Boot.
+Le projet *springboot-elastic-agent* est la librairie pour utiliser l'agent de monitoring Elastic dans les projets Spring Boot.
 
 ## Frameworks
 - [Spring boot](https://spring.io/projects/spring-boot) [@2.7.18](https://docs.spring.io/spring-boot/docs/2.7.18/reference/html)
