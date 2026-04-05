@@ -4,7 +4,7 @@
 Le projet *springboot-elastic-agent* est la librairie pour utiliser l'agent de monitoring Elastic dans les projets Spring Boot.
 
 ## Frameworks
-- [Spring boot](https://spring.io/projects/spring-boot) [@2.7.18](https://docs.spring.io/spring-boot/docs/2.7.18/reference/html)
+- [Spring boot](https://spring.io/projects/spring-boot) [@4.0.5](https://docs.spring.io/spring-boot/)
     - [Spring Boot Security](https://spring.io/projects/spring-security)
 
 ## Dependencies
@@ -36,7 +36,7 @@ elastic.apm.service-name=@project.parent.artifactId@
 
 Environnement de l'instance
 ```properties
-elastic.apm.environment=${info.server.environment}
+elastic.apm.environment=${server.exec.environment}
 ```
 
 Packages de l'application 
@@ -46,7 +46,7 @@ elastic.apm.application-packages=@project.parent.groupId@
 
 Hostname de l'instance
 ```properties
-elastic.apm.hostname=${info.server.hostname}
+elastic.apm.hostname=${server.exec.hostname}
 ```
 
 Pour capturer les body reçus en entrée de l'API
