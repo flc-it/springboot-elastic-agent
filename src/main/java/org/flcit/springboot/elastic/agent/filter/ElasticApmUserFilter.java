@@ -17,20 +17,24 @@
 package org.flcit.springboot.elastic.agent.filter;
 
 import java.io.IOException;
+import java.util.function.BiConsumer;
 
+import org.flcit.springboot.elastic.agent.ElasticApmAttachPostProcess;
+import org.flcit.springboot.elastic.agent.context.ElasticSetContext;
+import org.flcit.springboot.elastic.agent.context.ElasticUserContext;
+import org.flcit.springboot.elastic.agent.context.MappedValues;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import co.elastic.apm.api.ElasticApm;
+import co.elastic.apm.api.Transaction;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import co.elastic.apm.api.ElasticApm;
-import org.flcit.commons.core.util.ObjectUtils;
-import org.flcit.commons.core.util.ReflectionUtils;
-import org.flcit.springboot.elastic.agent.ElasticApmAttachPostProcess;
 
 /**
  * 
@@ -39,35 +43,52 @@ import org.flcit.springboot.elastic.agent.ElasticApmAttachPostProcess;
  */
 public class ElasticApmUserFilter extends OncePerRequestFilter {
 
+    private final ElasticSetContext setContext;
+
+    public ElasticApmUserFilter(ElasticSetContext elasticSetContext) {
+        this.setContext = elasticSetContext;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        if (ElasticApmAttachPostProcess.isActive()) {
+        if (ElasticApmAttachPostProcess.isAttached()) {
             final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null
-                    && authentication.isAuthenticated()) {
-                ElasticApm.currentTransaction().setUser(
-                        ObjectUtils.getOrDefault(getValue(authentication, "id"), authentication.getName()),
-                        getValue(authentication, "email"),
-                        ObjectUtils.getOrDefault(getValue(authentication, "username"), authentication.getName()));
+            final RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+            final Transaction transaction = ElasticApm.currentTransaction();
+            if (authentication != null && authentication.isAuthenticated()) {
+                setUser(transaction, setContext.getUserContext(authentication));
             }
+            setValues(setContext.getCustoms(authentication, requestAttributes), transaction::addCustomContext, transaction::addCustomContext, transaction::addCustomContext);
+            setValues(setContext.getLabels(authentication, requestAttributes), transaction::setLabel, transaction::setLabel, transaction::setLabel);
         }
         filterChain.doFilter(request, response);
     }
 
-    private static final String getValue(final Authentication authentication, String field) {
-        String value = getValue(authentication.getPrincipal(), field);
-        if (value == null) {
-            value = getValue(authentication.getDetails(), field);
+    private static final void setUser(final Transaction transaction, final ElasticUserContext userContext) {
+        if (userContext == null) {
+            return;
         }
-        return value;
+        transaction.setUser(
+                userContext.getId(),
+                userContext.getEmail(),
+                userContext.getUsername(),
+                userContext.getDomain());
     }
 
-    private static final String getValue(final Object object, String field) {
-        if (object == null) {
-            return null;
+    private static final void setValues(MappedValues mappedValues, BiConsumer<String, Number> number, BiConsumer<String, String> string, BiConsumer<String, Boolean> bool) {
+        if (mappedValues == null) {
+            return;
         }
-        return ReflectionUtils.getFieldValue(object, field, String.class);
+        if (mappedValues.getNumbers() != null) {
+            mappedValues.getNumbers().forEach(number);
+        }
+        if (mappedValues.getStrings() != null) {
+            mappedValues.getStrings().forEach(string);
+        }
+        if (mappedValues.getBooleans() != null) {
+            mappedValues.getBooleans().forEach(bool);
+        }
     }
 
 }

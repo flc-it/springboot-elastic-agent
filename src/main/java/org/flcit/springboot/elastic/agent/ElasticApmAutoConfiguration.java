@@ -16,13 +16,14 @@
 
 package org.flcit.springboot.elastic.agent;
 
+import org.flcit.springboot.elastic.agent.context.ElasticSetContext;
+import org.flcit.springboot.elastic.agent.filter.ElasticApmUserFilter;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication.Type;
 import org.springframework.context.annotation.Bean;
-
-import org.flcit.springboot.elastic.agent.filter.ElasticApmUserFilter;
 
 /**
  * 
@@ -36,10 +37,11 @@ public class ElasticApmAutoConfiguration {
      * @return
      */
     @Bean
+    @ConditionalOnBean(ElasticSetContext.class)
     @ConditionalOnWebApplication(type = Type.SERVLET)
     @ConditionalOnClass(name = "org.springframework.security.core.context.SecurityContextHolder")
-    public ElasticApmUserFilter getUserFilter() {
-        return new ElasticApmUserFilter();
+    public ElasticApmUserFilter getUserFilter(ElasticSetContext elasticSetContext) {
+        return new ElasticApmUserFilter(elasticSetContext);
     }
 
 }

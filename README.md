@@ -4,7 +4,7 @@
 Le projet *springboot-elastic-agent* est la librairie pour utiliser l'agent de monitoring Elastic dans les projets Spring Boot.
 
 ## Frameworks
-- [Spring boot](https://spring.io/projects/spring-boot) [@4.0.5](https://docs.spring.io/spring-boot/)
+- [Spring boot](https://spring.io/projects/spring-boot) [@3.5.14](https://docs.spring.io/spring-boot/3.5/index.html)
     - [Spring Boot Security](https://spring.io/projects/spring-security)
 
 ## Dependencies
@@ -18,8 +18,34 @@ Permet à l'API d'envoyer ses metrics à l'APM Elastic qui les enregistre dans E
 Documentation : https://www.elastic.co/fr/observability/application-performance-monitoring
   
 Ajout automatique du context user depuis le User authentifié dans Spring Security.
+## Implementation du Bean d'injection du context dans Elastic
 
-## Paramétrage du client java
+Ajout automatique du context dans Elastic depuis la classe de Bean implmentée :
+**org.flcit.springboot.elastic.agent.context.ElasticSetContext**
+
+FlcElasticSetContext.class :
+```java
+import org.flcit.springboot.elastic.agent.context.ElasticSetContext;
+import org.flcit.springboot.elastic.agent.context.ElasticUserContext;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.Authentication;
+
+@Configuration
+public class FlcElasticSetContext implements ElasticSetContext {
+
+    @Override
+    public ElasticUserContext getUserContext(Authentication authentication) {
+        if (authentication instanceof OAuth2TokenAuthenticationToken oauth2Token) {
+            return new ElasticUserContext()
+                    .setUsername(oauth2Token.getName());
+        }
+        return null;
+    }
+
+}
+```
+
+## Paramétrage de l'agent Elastic java
 
 Reprends la configuration native de la librairie de l'elastic APM Java :
 https://www.elastic.co/guide/en/apm/agent/java/current/configuration.html
@@ -31,7 +57,7 @@ elastic.apm.server-url=https://elasticapm
 
 Nom du service
 ```properties
-elastic.apm.service-name=@project.parent.artifactId@
+elastic.apm.service-name=@project.artifactId@
 ```
 
 Environnement de l'instance
@@ -41,7 +67,7 @@ elastic.apm.environment=${server.exec.environment}
 
 Packages de l'application 
 ```properties
-elastic.apm.application-packages=@project.parent.groupId@
+elastic.apm.application-packages=@project.groupId@
 ```
 
 Hostname de l'instance

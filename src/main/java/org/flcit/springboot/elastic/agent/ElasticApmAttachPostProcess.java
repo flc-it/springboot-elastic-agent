@@ -16,14 +16,14 @@
 
 package org.flcit.springboot.elastic.agent;
 
+import org.flcit.springboot.elastic.agent.configuration.ElasticApmConfiguration;
+import org.flcit.springboot.elastic.agent.configuration.ElasticApmGetConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.env.EnvironmentPostProcessor;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Profiles;
 
 import co.elastic.apm.attach.ElasticApmAttacher;
-import org.flcit.springboot.elastic.agent.configuration.ElasticApmConfiguration;
-import org.flcit.springboot.elastic.agent.configuration.ElasticApmGetConfiguration;
 
 /**
  * 
@@ -32,7 +32,7 @@ import org.flcit.springboot.elastic.agent.configuration.ElasticApmGetConfigurati
  */
 public final class ElasticApmAttachPostProcess implements EnvironmentPostProcessor {
 
-    private static boolean active = false;
+    private static boolean attached = false;
 
     /**
      *
@@ -42,11 +42,7 @@ public final class ElasticApmAttachPostProcess implements EnvironmentPostProcess
         if (!isActive(environment)) {
             return;
         }
-        final ElasticApmConfiguration config = ElasticApmGetConfiguration.override(ElasticApmGetConfiguration.read(environment, application.getMainApplicationClass()), ElasticApmGetConfiguration.readFromFile());
-        if (config.isActive()) {
-            setActive(true);
-            ElasticApmAttacher.attach(config);
-        }
+        attach(environment, application.getMainApplicationClass());
     }
 
     private static final boolean isActive(ConfigurableEnvironment environment) {
@@ -56,12 +52,17 @@ public final class ElasticApmAttachPostProcess implements EnvironmentPostProcess
     /**
      * @return
      */
-    public static boolean isActive() {
-        return active;
+    public static boolean isAttached() {
+        return attached;
     }
 
-    private static void setActive(boolean active) {
-        ElasticApmAttachPostProcess.active = active;
+    public static void attach(ConfigurableEnvironment environment, Class<?> mainApplicationClass) {
+        final ElasticApmConfiguration config = ElasticApmGetConfiguration.override(ElasticApmGetConfiguration.read(environment, mainApplicationClass), ElasticApmGetConfiguration.readFromFile());
+        if (!config.isActive()) {
+            return;
+        }
+        ElasticApmAttacher.attach(config);
+        ElasticApmAttachPostProcess.attached = true;
     }
 
 }
